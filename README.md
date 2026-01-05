@@ -109,9 +109,11 @@ This script adds 6 test tickets covering various scenarios:
     "summary": "Customer unable to access account due to login failure",
     "category": "technical",
     "priority": "high",
-    "sentiment_score": -0.6
+    "sentiment_score": 0.2
 }
 ```
+
+Sentiment scores range from 0.0 (very negative) to 1.0 (very positive).
 
 ## Database Schema
 
