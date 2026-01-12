@@ -8,6 +8,7 @@ An intelligent customer support ticket classification system powered by Pydantic
 - **Automatic Classification**: Categorizes tickets into billing, technical, feature requests, or general inquiries
 - **Priority Assignment**: Automatically assigns priority levels (low, medium, high, critical)
 - **Sentiment Analysis**: Evaluates customer sentiment with numerical scoring
+- **Flexible Input Methods**: Command-line args, interactive mode, or default sample tickets
 - **PostgreSQL Integration**: Robust data storage with custom ENUM types and optimized indexes
 - **Async Architecture**: Built with asyncpg for high-performance database operations
 
@@ -79,13 +80,27 @@ Customer Ticket → PydanticAI Agent → Google Gemini AI → Structured Output 
 
 ## Usage
 
-### Process a Single Ticket
+### Process Tickets
 
-Run the main application to process a demo ticket:
+The application supports three modes for ticket input:
 
+**1. Default Sample Ticket**
 ```bash
 python -m src.main
 ```
+Processes a built-in sample ticket for testing.
+
+**2. Command-Line Input**
+```bash
+python -m src.main "Subject: Need help with my account. Email: user@example.com Name: John Doe"
+```
+Provide the entire ticket content as a command-line argument.
+
+**3. Interactive Mode**
+```bash
+python -m src.main --interactive
+```
+Enter ticket content interactively with multi-line support. Type `END` on a new line when finished.
 
 ### Add Test Tickets
 

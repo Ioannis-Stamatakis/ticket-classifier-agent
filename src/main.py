@@ -1,6 +1,7 @@
 """Main application entry point."""
 import asyncio
 import re
+import sys
 from src.config.settings import Settings
 from src.database.connection import create_pool, init_database, close_pool
 from src.agent.ticket_agent import create_ticket_agent
@@ -58,14 +59,64 @@ def extract_customer_info(ticket_content: str) -> dict:
     }
 
 
+def get_ticket_input() -> str:
+    """
+    Get ticket content from command line args or interactive input.
+
+    Returns:
+        Ticket content string
+    """
+    # Check if ticket provided as command line argument
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--interactive' or sys.argv[1] == '-i':
+            return get_interactive_ticket()
+        else:
+            # Treat all args as the ticket content
+            return ' '.join(sys.argv[1:])
+
+    # Use sample ticket by default
+    return SAMPLE_TICKET
+
+
+def get_interactive_ticket() -> str:
+    """
+    Get ticket content via interactive multi-line input.
+
+    Returns:
+        Ticket content string
+    """
+    print("\nEnter your ticket content (type 'END' on a new line when done):")
+    print("-" * 60)
+
+    lines = []
+    while True:
+        try:
+            line = input()
+            if line.strip().upper() == 'END':
+                break
+            lines.append(line)
+        except EOFError:
+            break
+
+    return '\n'.join(lines)
+
+
 async def main():
     """Main application flow."""
     print("=" * 60)
     print("PydanticAI Ticket Classification System")
     print("=" * 60)
+    print("\nUsage:")
+    print("  python -m src.main                    # Use default sample ticket")
+    print("  python -m src.main --interactive      # Enter ticket interactively")
+    print("  python -m src.main \"Your ticket...\"   # Provide ticket as argument")
+    print("=" * 60)
 
     pool = None
     try:
+        # Get ticket content from input
+        ticket_content = get_ticket_input()
+
         # 1. Load configuration
         print("\n[1/5] Loading configuration...")
         settings = Settings.from_env()
@@ -86,20 +137,20 @@ async def main():
         agent = create_ticket_agent(settings.gemini_api_key)
         print("  ✓ Agent created with Google Gemini (gemini-2.5-flash)")
 
-        # 5. Process sample ticket
-        print("\n[5/5] Processing sample ticket...")
-        print("\n--- SAMPLE TICKET ---")
-        print(SAMPLE_TICKET)
+        # 5. Process ticket
+        print("\n[5/5] Processing ticket...")
+        print("\n--- TICKET CONTENT ---")
+        print(ticket_content)
         print("--- END TICKET ---\n")
 
         # Extract customer info
-        customer_info = extract_customer_info(SAMPLE_TICKET)
+        customer_info = extract_customer_info(ticket_content)
         print(f"  ✓ Extracted customer: {customer_info['name']} ({customer_info['email']})")
 
         # Run agent analysis
         print("\n  Analyzing ticket with AI agent...")
         result = await agent.run(
-            f"Analyze this customer support ticket:\n\n{SAMPLE_TICKET}",
+            f"Analyze this customer support ticket:\n\n{ticket_content}",
             deps=pool
         )
 
@@ -134,7 +185,7 @@ async def main():
                     RETURNING id
                 """,
                     customer_id,
-                    SAMPLE_TICKET,
+                    ticket_content,
                     result.output.summary,
                     result.output.category,
                     result.output.priority,
