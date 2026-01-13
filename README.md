@@ -8,6 +8,7 @@ An intelligent customer support ticket classification system powered by Pydantic
 - **Automatic Classification**: Categorizes tickets into billing, technical, feature requests, or general inquiries
 - **Priority Assignment**: Automatically assigns priority levels (low, medium, high, critical)
 - **Sentiment Analysis**: Evaluates customer sentiment with numerical scoring
+- **Beautiful CLI Display**: Color-coded Rich tables showing recent tickets with visual priority indicators
 - **Flexible Input Methods**: Command-line args, interactive mode, or default sample tickets
 - **PostgreSQL Integration**: Robust data storage with custom ENUM types and optimized indexes
 - **Async Architecture**: Built with asyncpg for high-performance database operations
@@ -21,6 +22,7 @@ An intelligent customer support ticket classification system powered by Pydantic
 - **PostgreSQL**: Relational database with custom ENUM types
 - **asyncpg**: Asynchronous PostgreSQL driver
 - **SQLModel**: Type-safe ORM with Pydantic integration
+- **Rich**: Beautiful terminal UI with color-coded tables
 - **Python 3.8+**: Modern async/await patterns
 
 ### Data Flow
@@ -101,6 +103,32 @@ Provide the entire ticket content as a command-line argument.
 python -m src.main --interactive
 ```
 Enter ticket content interactively with multi-line support. Type `END` on a new line when finished.
+
+### Rich CLI Display
+
+After processing a ticket, the system displays a beautiful color-coded table showing the 5 most recent tickets:
+
+**Features:**
+- **Color-coded priorities**: Critical (bright red), High (red), Medium (yellow), Low (green)
+- **Color-coded categories**: Billing (cyan), Technical (magenta), Feature Request (blue), General (white)
+- **Sentiment indicators**: Percentage with emoji (positive 😊, neutral 😐, negative 😞)
+- **Highlighted rows**: Newly processed tickets appear with a green background
+- **Compact columns**: ID, Customer, Summary, Category, Priority, Sentiment
+
+**Example Table Output:**
+```
+Recent Tickets (Last 5)
+┏━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ ID ┃ Customer        ┃ Summary            ┃ Category  ┃ Priority ┃ Sentiment ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━┩
+│  8 │ Sarah Johnson   │ Customer charged   │  Billing  │ CRITICAL │  10% 😞   │
+│    │                 │ twice for sub...   │           │          │           │
+├────┼─────────────────┼────────────────────┼───────────┼──────────┼───────────┤
+│  7 │ Lisa Anderson   │ Thank you note     │  General  │   LOW    │  98% 😊   │
+└────┴─────────────────┴────────────────────┴───────────┴──────────┴───────────┘
+```
+
+The table automatically updates after each ticket is processed, providing instant visual feedback on classification results.
 
 ### Add Test Tickets
 
@@ -186,6 +214,9 @@ TicketClassifierAgent/
 │   ├── agent/
 │   │   ├── ticket_agent.py    # PydanticAI agent
 │   │   └── tools.py           # Agent tools
+│   ├── display/
+│   │   ├── __init__.py        # Display module
+│   │   └── table_display.py   # Rich CLI table rendering
 │   └── utils/
 │       └── enums.py           # Shared enumerations
 ```
@@ -276,6 +307,7 @@ Core packages:
 - `sqlmodel>=0.0.22` - SQL ORM with Pydantic
 - `python-dotenv>=1.0.0` - Environment management
 - `pydantic>=2.0.0` - Data validation
+- `rich>=13.7.0` - Terminal UI and table rendering
 
 See `requirements.txt` for complete list.
 
