@@ -1,210 +1,196 @@
-# Ticket Classifier Agent
+# 🎫 Ticket Classifier Agent
 
-An intelligent customer support ticket classification system powered by PydanticAI and Google Gemini AI. This system automatically analyzes support tickets to extract summaries, categorize issues, assign priority levels, and perform sentiment analysis.
+> **AI-powered customer support ticket classification with beautiful CLI visualization**
 
-## Features
+An intelligent ticket classification system built with **PydanticAI** and **Google Gemini AI** that automatically analyzes support tickets, assigns priorities, detects sentiment, and displays results in a stunning color-coded terminal interface.
 
-- **AI-Powered Analysis**: Uses Google Gemini 2.5 Flash for intelligent ticket processing
-- **Automatic Classification**: Categorizes tickets into billing, technical, feature requests, or general inquiries
-- **Priority Assignment**: Automatically assigns priority levels (low, medium, high, critical)
-- **Sentiment Analysis**: Evaluates customer sentiment with numerical scoring
-- **Beautiful CLI Display**: Color-coded Rich tables showing recent tickets with visual priority indicators
-- **Flexible Input Methods**: Command-line args, interactive mode, or default sample tickets
-- **PostgreSQL Integration**: Robust data storage with custom ENUM types and optimized indexes
-- **Async Architecture**: Built with asyncpg for high-performance database operations
+<p align="center">
+  <img src="docs/screenshot.png" alt="Ticket Classifier CLI" width="100%">
+</p>
 
-## Architecture
+## ✨ Why This Project?
+
+Traditional LLM integrations return unstructured text that's difficult to validate and integrate into production systems. This project demonstrates **type-safe AI agents** for data engineering:
+
+- ✅ **Structured Output** - Pydantic schemas ensure predictable, validated responses
+- ✅ **Production Ready** - PostgreSQL storage with proper ENUM types and indexes
+- ✅ **Visual Feedback** - Rich CLI tables with color-coded priorities and sentiment
+- ✅ **Multiple Input Modes** - CLI args, interactive mode, or sample data
+- ✅ **Real-world Ready** - Async architecture with connection pooling
+
+## 🚀 Features
+
+### Intelligent Classification
+- **Automatic Categorization** - Billing, Technical, Feature Requests, or General inquiries
+- **Smart Priority Assignment** - Low, Medium, High, or Critical based on urgency
+- **Sentiment Analysis** - Numerical scoring (0.0 - 1.0) with emoji indicators
+- **AI-Powered Summaries** - Concise summaries of ticket content
+
+### Beautiful CLI Interface
+- **Color-Coded Priorities** - Critical (🔴 red), High (🟠 orange), Medium (🟡 yellow), Low (🟢 green)
+- **Category Colors** - Billing (cyan), Technical (magenta), Feature Request (blue), General (white)
+- **Sentiment Display** - Percentage with emojis (😊 positive, 😐 neutral, 😞 negative)
+- **Highlighted Rows** - Newly processed tickets appear with green background
+- **Multi-line Summaries** - Full text wrapping for complete context
+
+### Type-Safe Architecture
+```python
+class ProcessedTicket(BaseModel):
+    summary: str
+    category: Category  # validated enum
+    priority: Priority  # validated enum
+    sentiment_score: float  # validated 0.0-1.0
+```
+
+No more parsing unstructured LLM responses - every output is validated and type-safe!
+
+## 📦 Installation
+
+### Prerequisites
+- Python 3.8+
+- PostgreSQL 12+
+- Google Gemini API key ([Get one here](https://ai.google.dev/))
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Ioannis-Stamatakis/ticket-classifier-agent.git
+cd ticket-classifier-agent
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials:
+#   GEMINI_API_KEY=your_key_here
+#   DB_HOST=localhost
+#   DB_PORT=5432
+#   DB_NAME=ticket_db
+#   DB_USER=your_user
+#   DB_PASSWORD=your_password
+
+# Run with sample data
+python -m src.main
+```
+
+The database schema will be automatically initialized on first run!
+
+## 🎮 Usage
+
+### Process Tickets
+
+**Random Sample Ticket (Default)**
+```bash
+python -m src.main
+```
+Processes one random ticket from 5 diverse samples.
+
+**All Sample Tickets**
+```bash
+python -m src.main --all
+```
+Processes all 5 built-in samples sequentially - great for demos!
+
+**Your Own Ticket**
+```bash
+python -m src.main "Subject: Login Issue
+Hi, I can't access my account.
+Email: john@example.com
+Name: John Doe"
+```
+
+**Interactive Mode**
+```bash
+python -m src.main --interactive
+```
+Multi-line input - type `END` when finished.
+
+### Built-in Sample Tickets
+
+The system includes 5 realistic scenarios:
+
+| Ticket | Category | Priority | Sentiment | Description |
+|--------|----------|----------|-----------|-------------|
+| 🔴 Billing Error | Billing | CRITICAL | 10% 😞 | Double-charged subscription |
+| 🔐 Login Issues | Technical | HIGH | 30% 😞 | Account access problems |
+| 🌙 Dark Mode Request | Feature | MEDIUM | 95% 😊 | UI enhancement request |
+| 💰 Pricing Question | Billing | LOW | 90% 😊 | Plan upgrade inquiry |
+| 💚 Thank You | General | LOW | 100% 😊 | Positive feedback |
+
+## 🏗️ Architecture
 
 ### Technology Stack
 
-- **PydanticAI**: AI agent framework for structured output
-- **Google Gemini AI**: gemini-2.5-flash model for natural language processing
-- **PostgreSQL**: Relational database with custom ENUM types
-- **asyncpg**: Asynchronous PostgreSQL driver
-- **SQLModel**: Type-safe ORM with Pydantic integration
-- **Rich**: Beautiful terminal UI with color-coded tables
-- **Python 3.8+**: Modern async/await patterns
+- **[PydanticAI](https://ai.pydantic.dev/)** - Type-safe AI agent framework
+- **[Google Gemini](https://ai.google.dev/)** - gemini-2.5-flash model
+- **[PostgreSQL](https://www.postgresql.org/)** - Relational database with custom ENUMs
+- **[asyncpg](https://github.com/MagicStack/asyncpg)** - High-performance async PostgreSQL driver
+- **[Rich](https://rich.readthedocs.io/)** - Beautiful terminal UI
+- **[SQLModel](https://sqlmodel.tiangolo.com/)** - SQL ORM with Pydantic integration
 
 ### Data Flow
 
 ```
-Customer Ticket → PydanticAI Agent → Google Gemini AI → Structured Output → PostgreSQL
+Raw Ticket → PydanticAI Agent → Google Gemini AI → Validated Output → PostgreSQL
+                                                           ↓
+                                                    Rich Table Display
 ```
 
-## Installation
+### Project Structure
 
-### Prerequisites
-
-- Python 3.8 or higher
-- PostgreSQL 12 or higher
-- Google Gemini API key
-
-### Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Ioannis-Stamatakis/TicketClassifierAgent.git
-   cd TicketClassifierAgent
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` and add your credentials:
-   ```env
-   GEMINI_API_KEY=your_google_gemini_api_key
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=ticket_db
-   DB_USER=your_database_user
-   DB_PASSWORD=your_database_password
-   ```
-
-5. **Initialize database**
-
-   The database schema will be automatically initialized on first run. The schema includes:
-   - Custom ENUM types for categories and priorities
-   - Customers and tickets tables
-   - Optimized indexes for common queries
-
-## Usage
-
-### Process Tickets
-
-The application supports multiple modes for ticket input:
-
-**1. Random Sample Ticket (Default)**
-```bash
-python -m src.main
 ```
-Processes one random ticket from 5 built-in sample tickets covering different scenarios (billing issues, technical problems, feature requests, pricing questions, and positive feedback).
-
-**2. Process All Sample Tickets**
-```bash
-python -m src.main --all
-```
-Processes all 5 built-in sample tickets sequentially, demonstrating the full range of ticket types and AI classification capabilities.
-
-**3. Command-Line Input**
-```bash
-python -m src.main "Subject: Need help with my account. Email: user@example.com Name: John Doe"
-```
-Provide the entire ticket content as a command-line argument.
-
-**4. Interactive Mode**
-```bash
-python -m src.main --interactive
-```
-Enter ticket content interactively with multi-line support. Type `END` on a new line when finished.
-
-### Rich CLI Display
-
-After processing a ticket, the system displays a beautiful color-coded table showing the 5 most recent tickets:
-
-**Features:**
-- **Color-coded priorities**: Critical (bright red), High (red), Medium (yellow), Low (green)
-- **Color-coded categories**: Billing (cyan), Technical (magenta), Feature Request (blue), General (white)
-- **Sentiment indicators**: Percentage with emoji (positive 😊, neutral 😐, negative 😞)
-- **Highlighted rows**: Newly processed tickets appear with a green background
-- **Compact columns**: ID, Customer, Summary, Category, Priority, Sentiment
-
-**Example Table Output:**
-```
-Recent Tickets (Last 5)
-┏━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┓
-┃ ID ┃ Customer        ┃ Summary            ┃ Category  ┃ Priority ┃ Sentiment ┃
-┡━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━┩
-│  8 │ Sarah Johnson   │ Customer charged   │  Billing  │ CRITICAL │  10% 😞   │
-│    │                 │ twice for sub...   │           │          │           │
-├────┼─────────────────┼────────────────────┼───────────┼──────────┼───────────┤
-│  7 │ Lisa Anderson   │ Thank you note     │  General  │   LOW    │  98% 😊   │
-└────┴─────────────────┴────────────────────┴───────────┴──────────┴───────────┘
+ticket-classifier-agent/
+├── src/
+│   ├── main.py                # Application entry point
+│   ├── agent/
+│   │   ├── ticket_agent.py    # PydanticAI agent configuration
+│   │   └── tools.py           # Agent tools
+│   ├── database/
+│   │   ├── connection.py      # Connection pool management
+│   │   └── init_schema.sql    # Database schema with ENUMs
+│   ├── display/
+│   │   └── table_display.py   # Rich CLI table rendering
+│   ├── models/
+│   │   ├── schemas.py         # Pydantic validation schemas
+│   │   └── database.py        # SQLModel tables
+│   ├── config/
+│   │   └── settings.py        # Configuration management
+│   └── utils/
+│       └── enums.py           # Shared enumerations
+├── scripts/
+│   └── add_test_tickets.py    # Populate test data
+├── docs/
+│   └── screenshot.png         # CLI screenshot
+├── requirements.txt           # Python dependencies
+├── .env.example               # Environment template
+└── README.md                  # This file
 ```
 
-The table automatically updates after each ticket is processed, providing instant visual feedback on classification results.
+## 💾 Database Schema
 
-### Built-in Sample Tickets
-
-The system includes 5 diverse sample tickets for testing:
-
-1. **Billing Error** - Critical priority, negative sentiment (Sarah Johnson)
-   - Double-charged subscription with immediate refund demand
-
-2. **Login Issues** - High priority, negative sentiment (Michael Chen)
-   - Unable to access account with password reset problems
-
-3. **Feature Request** - Medium priority, positive sentiment (Emma Davis)
-   - Dark mode request for late-night usage
-
-4. **Pricing Questions** - Low priority, positive sentiment (Alex Rivera)
-   - Inquiry about plan upgrades and pricing details
-
-5. **Thank You Note** - Low priority, very positive sentiment (Olivia Martinez)
-   - Appreciation for excellent customer service
-
-These samples demonstrate the AI's ability to correctly classify various ticket types, assign appropriate priorities, and detect sentiment accurately.
-
-### Add Test Tickets
-
-Populate the database with diverse test tickets:
-
-```bash
-python scripts/add_test_tickets.py
-```
-
-This script adds 6 test tickets covering various scenarios:
-- Billing issues with critical priority
-- Technical problems (login, system outages)
-- Feature requests
-- General inquiries
-- Positive customer feedback
-
-### Example Output
-
-```python
-{
-    "summary": "Customer unable to access account due to login failure",
-    "category": "technical",
-    "priority": "high",
-    "sentiment_score": 0.2
-}
-```
-
-Sentiment scores range from 0.0 (very negative) to 1.0 (very positive).
-
-## Database Schema
-
-### ENUM Types
-
+### Custom ENUM Types
 ```sql
-priority_enum: low, medium, high, critical
-category_enum: billing, technical, feature_request, general
+CREATE TYPE priority_enum AS ENUM ('low', 'medium', 'high', 'critical');
+CREATE TYPE category_enum AS ENUM ('billing', 'technical', 'feature_request', 'general');
 ```
 
 ### Tables
 
 **customers**
-- `id` (UUID, primary key)
-- `email` (VARCHAR, unique)
+- `id` (UUID, PRIMARY KEY)
+- `email` (VARCHAR, UNIQUE)
 - `name` (VARCHAR)
 - `created_at` (TIMESTAMP)
 
 **tickets**
-- `id` (UUID, primary key)
-- `customer_id` (UUID, foreign key)
+- `id` (UUID, PRIMARY KEY)
+- `customer_id` (UUID, FOREIGN KEY)
 - `raw_content` (TEXT)
 - `summary` (TEXT)
 - `category` (category_enum)
@@ -212,146 +198,166 @@ category_enum: billing, technical, feature_request, general
 - `sentiment_score` (FLOAT)
 - `created_at` (TIMESTAMP)
 
-### Indexes
+### Optimized Indexes
+- `idx_tickets_customer_id` - Fast customer lookups
+- `idx_tickets_category` - Filter by category
+- `idx_tickets_priority` - Filter by priority
+- `idx_customers_email` - Email lookups
 
-- `idx_tickets_customer_id`: Fast customer ticket lookups
-- `idx_tickets_category`: Filter by category
-- `idx_tickets_priority`: Filter by priority
-- `idx_customers_email`: Fast email lookups
-
-## Project Structure
-
-```
-TicketClassifierAgent/
-├── README.md                   # This file
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment template
-├── scripts/
-│   └── add_test_tickets.py    # Test data generator
-├── src/
-│   ├── main.py                # Application entry point
-│   ├── config/
-│   │   └── settings.py        # Configuration management
-│   ├── models/
-│   │   ├── database.py        # SQLModel database models
-│   │   └── schemas.py         # Pydantic schemas
-│   ├── database/
-│   │   ├── connection.py      # Database connection pool
-│   │   └── init_schema.sql    # Database schema
-│   ├── agent/
-│   │   ├── ticket_agent.py    # PydanticAI agent
-│   │   └── tools.py           # Agent tools
-│   ├── display/
-│   │   ├── __init__.py        # Display module
-│   │   └── table_display.py   # Rich CLI table rendering
-│   └── utils/
-│       └── enums.py           # Shared enumerations
-```
-
-## Configuration
+## 🔧 Configuration
 
 ### Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GEMINI_API_KEY` | Google Gemini API key | Yes |
-| `DB_HOST` | PostgreSQL host | Yes |
-| `DB_PORT` | PostgreSQL port | Yes |
-| `DB_NAME` | Database name | Yes |
-| `DB_USER` | Database user | Yes |
-| `DB_PASSWORD` | Database password | Yes |
+| `GEMINI_API_KEY` | Google Gemini API key | ✅ Yes |
+| `DB_HOST` | PostgreSQL host | ✅ Yes |
+| `DB_PORT` | PostgreSQL port | ✅ Yes |
+| `DB_NAME` | Database name | ✅ Yes |
+| `DB_USER` | Database user | ✅ Yes |
+| `DB_PASSWORD` | Database password | ✅ Yes |
 
-### Database Connection
+### Database Connection Features
+- ✅ Automatic URL encoding for special characters in passwords
+- ✅ SSL configuration based on server support
+- ✅ Connection pooling for optimal performance
+- ✅ Idempotent schema initialization
 
-The system automatically handles:
-- URL encoding for special characters in credentials
-- SSL configuration based on server support
-- Connection pooling for optimal performance
+## 🎯 Key Implementation Patterns
 
-## API Integration
+### Type-Safe Agent Responses
 
-### Google Gemini AI
-
-The system uses Google Gemini 2.5 Flash model for:
-- Natural language understanding
-- Text summarization
-- Classification and categorization
-- Sentiment analysis
-
-API authentication is handled via environment variables.
-
-## Development
-
-### Running Tests
-
-```bash
-pytest
+Instead of parsing unstructured text:
+```python
+# ❌ Traditional approach
+response = "This ticket is urgent and about billing"
+# Now you need to parse this...
 ```
 
-### Code Style
+You get validated, structured data:
+```python
+# ✅ PydanticAI approach
+result = await agent.run(ticket_text)
+result.output.priority    # "critical" (validated enum)
+result.output.category    # "billing" (validated enum)
+result.output.sentiment   # 0.15 (validated float 0.0-1.0)
+```
 
-The project follows Python best practices:
-- Type hints for all functions
-- Async/await patterns for I/O operations
-- Pydantic models for data validation
-- SQLModel for type-safe database operations
+### PostgreSQL ENUM Integration
 
-## Troubleshooting
+```python
+# Python enums match SQL types exactly
+class Priority(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+# Database queries use explicit type casting
+INSERT INTO tickets (..., priority, ...)
+VALUES ($1, $2::priority_enum, ...)
+```
+
+### Rich CLI Rendering
+
+```python
+# Color-coded display with wrapping
+await display_recent_tickets(
+    pool=pool,
+    limit=5,
+    highlight_id=new_ticket_id  # Green background
+)
+```
+
+## 🧪 Testing
+
+### Run Test Data Script
+```bash
+python scripts/add_test_tickets.py
+```
+
+This populates the database with 6 diverse tickets covering:
+- Critical billing issues
+- Technical login problems
+- Feature requests
+- General inquiries
+- Positive feedback
+
+## 🚧 Troubleshooting
 
 ### Common Issues
 
-**Connection errors**
-- Ensure PostgreSQL is running
-- Verify credentials in `.env` file
-- Check if special characters in password are URL-encoded
+**"GoogleModel got an unexpected keyword argument 'api_key'"**
+- Set `GEMINI_API_KEY` as environment variable, not constructor parameter
 
-**SSL errors**
-- The system automatically handles SSL configuration
-- SSL is disabled by default for local development
+**"PostgreSQL server rejected SSL upgrade"**
+- Set `ssl=False` in connection settings (handled automatically)
 
-**API errors**
-- Verify `GEMINI_API_KEY` is set correctly
-- Check API quota and rate limits
+**"Unknown Customer" in output**
+- Include customer info in ticket: `Email: user@example.com` and `Name: Full Name`
 
-## Future Enhancements
+**Database connection errors**
+- Verify PostgreSQL is running
+- Check credentials in `.env`
+- Ensure special characters in password are handled (automatic URL encoding)
+
+## 🛣️ Roadmap
 
 - [ ] REST API endpoint for ticket submission
-- [ ] Batch processing for multiple tickets
 - [ ] Real-time streaming analysis
+- [ ] Batch processing for multiple tickets
 - [ ] Enhanced agent tools for database operations
 - [ ] Comprehensive test suite
 - [ ] Database migrations with Alembic
 - [ ] Multi-language support
-- [ ] Customer feedback integration
 - [ ] Analytics dashboard
+- [ ] Customer feedback integration
 
-## Dependencies
+## 📚 Learn More
 
-Core packages:
-- `pydantic-ai>=0.0.13` - AI agent framework
-- `google-generativeai>=0.8.0` - Google Gemini integration
-- `asyncpg>=0.29.0` - Async PostgreSQL driver
-- `sqlmodel>=0.0.22` - SQL ORM with Pydantic
-- `python-dotenv>=1.0.0` - Environment management
-- `pydantic>=2.0.0` - Data validation
-- `rich>=13.7.0` - Terminal UI and table rendering
+### Key Concepts
 
-See `requirements.txt` for complete list.
+**PydanticAI Benefits:**
+- Type-safe AI responses validated at runtime
+- Seamless integration with data pipelines
+- Production-ready with proper error handling
+- Structured output for reliable automation
 
-## License
+**Why This Matters:**
+Traditional LLM integrations are unpredictable. PydanticAI + proper type validation = AI agents you can trust in production data engineering workflows.
+
+### Resources
+
+- [PydanticAI Documentation](https://ai.pydantic.dev/)
+- [Google Gemini AI](https://ai.google.dev/)
+- [Rich Terminal UI](https://rich.readthedocs.io/)
+- [asyncpg Documentation](https://magicstack.github.io/asyncpg/)
+
+## 🤝 Contributing
+
+Contributions are welcome! This project demonstrates type-safe AI for data engineering. Feel free to:
+
+- Report bugs or suggest features via [Issues](https://github.com/Ioannis-Stamatakis/ticket-classifier-agent/issues)
+- Submit Pull Requests with improvements
+- Share your use cases and implementations
+
+## 📄 License
 
 This project is available under the MIT License.
 
-## Contributing
+## 🙏 Acknowledgments
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Contact
-
-For questions or feedback, please open an issue on GitHub.
-
-## Acknowledgments
-
-- Built with [PydanticAI](https://ai.pydantic.dev/)
+- Built with [PydanticAI](https://ai.pydantic.dev/) by Pydantic
 - Powered by [Google Gemini AI](https://ai.google.dev/)
-- Database design inspired by PostgreSQL best practices
+- UI by [Rich](https://rich.readthedocs.io/) by Will McGugan
+- Inspired by the need for type-safe, production-ready AI agents
+
+---
+
+<p align="center">
+  <strong>Made with ❤️ for type-safe AI engineering</strong>
+</p>
+
+<p align="center">
+  If you find this project helpful, please ⭐ star it on GitHub!
+</p>
