@@ -5,8 +5,9 @@ import sys
 from src.config.settings import Settings
 from src.database.connection import create_pool, init_database, close_pool
 from src.agent.ticket_agent import create_ticket_agent
-from src.display.table_display import display_recent_tickets
+from src.display.table_display import display_recent_tickets, display_filtered_tickets
 from src.export.csv_export import export_tickets_to_csv
+from src.utils.enums import Category, Priority
 
 
 # Sample customer tickets for testing
@@ -153,6 +154,48 @@ def get_export_args() -> tuple[bool, str]:
     return False, ""
 
 
+def get_filter_args() -> tuple[bool, str | None, str | None]:
+    """
+    Check if --filter / -f flag is present and parse the filter expression.
+
+    Returns:
+        Tuple of (should_filter, category_value, priority_value)
+    """
+    valid_categories = {e.value for e in Category}
+    valid_priorities = {e.value for e in Priority}
+
+    for i, arg in enumerate(sys.argv[1:], 1):
+        if arg in ('--filter', '-f'):
+            if i + 1 > len(sys.argv) - 1:
+                print("Error: --filter requires a value (e.g. --filter category=billing)")
+                sys.exit(1)
+
+            filter_expr = sys.argv[i + 1]
+            if '=' not in filter_expr:
+                print(f"Error: Invalid filter format '{filter_expr}'. Use key=value (e.g. category=billing)")
+                sys.exit(1)
+
+            key, value = filter_expr.split('=', 1)
+            key = key.strip().lower()
+            value = value.strip().lower()
+
+            if key == 'category':
+                if value not in valid_categories:
+                    print(f"Error: Invalid category '{value}'. Valid: {', '.join(sorted(valid_categories))}")
+                    sys.exit(1)
+                return True, value, None
+            elif key == 'priority':
+                if value not in valid_priorities:
+                    print(f"Error: Invalid priority '{value}'. Valid: {', '.join(sorted(valid_priorities))}")
+                    sys.exit(1)
+                return True, None, value
+            else:
+                print(f"Error: Unknown filter key '{key}'. Valid keys: category, priority")
+                sys.exit(1)
+
+    return False, None, None
+
+
 def get_ticket_input() -> str:
     """
     Get ticket content from command line args or interactive input.
@@ -170,6 +213,9 @@ def get_ticket_input() -> str:
         elif sys.argv[1] in ('--export', '-e'):
             # Export mode handled separately in main()
             return 'EXPORT'
+        elif sys.argv[1] in ('--filter', '-f'):
+            # Filter mode handled separately in main()
+            return 'FILTER'
         else:
             # Treat all args as the ticket content
             return ' '.join(sys.argv[1:])
@@ -262,6 +308,8 @@ async def main():
     print("  python -m src.main --interactive      # Enter ticket interactively")
     print("  python -m src.main --export           # Export tickets to CSV")
     print("  python -m src.main --export out.csv   # Export to custom filename")
+    print("  python -m src.main --filter category=billing  # Filter by category")
+    print("  python -m src.main --filter priority=high     # Filter by priority")
     print("  python -m src.main \"Your ticket...\"   # Provide ticket as argument")
     print("=" * 60)
 
@@ -296,6 +344,16 @@ async def main():
                 console.print(f"[green]  ✓ Exported {count} ticket(s) to {export_filename}[/green]")
             else:
                 console.print("[yellow]  No tickets found to export.[/yellow]")
+            return
+
+        # Handle filter mode (no AI agent needed)
+        should_filter, filter_category, filter_priority = get_filter_args()
+        if should_filter:
+            await display_filtered_tickets(
+                pool=pool,
+                category=filter_category,
+                priority=filter_priority,
+            )
             return
 
         # 4. Create ticket classification agent
