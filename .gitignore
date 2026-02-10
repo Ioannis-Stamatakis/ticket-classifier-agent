@@ -28,6 +28,9 @@ dist/
 .coverage
 htmlcov/
 
+# Exports
+*.csv
+
 # OS
 .DS_Store
 Thumbs.db

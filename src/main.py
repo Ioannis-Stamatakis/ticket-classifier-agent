@@ -6,6 +6,7 @@ from src.config.settings import Settings
 from src.database.connection import create_pool, init_database, close_pool
 from src.agent.ticket_agent import create_ticket_agent
 from src.display.table_display import display_recent_tickets
+from src.export.csv_export import export_tickets_to_csv
 
 
 # Sample customer tickets for testing
@@ -136,6 +137,22 @@ def extract_customer_info(ticket_content: str) -> dict:
     }
 
 
+def get_export_args() -> tuple[bool, str]:
+    """
+    Check if --export / -e flag is present in command line args.
+
+    Returns:
+        Tuple of (should_export, output_filename)
+    """
+    for i, arg in enumerate(sys.argv[1:], 1):
+        if arg in ('--export', '-e'):
+            # Check if next arg is a filename (not another flag)
+            if i + 1 <= len(sys.argv) - 1 and not sys.argv[i + 1].startswith('-'):
+                return True, sys.argv[i + 1]
+            return True, "tickets_export.csv"
+    return False, ""
+
+
 def get_ticket_input() -> str:
     """
     Get ticket content from command line args or interactive input.
@@ -150,6 +167,9 @@ def get_ticket_input() -> str:
         elif sys.argv[1] == '--all' or sys.argv[1] == '-a':
             # Return all sample tickets for batch processing
             return 'ALL_SAMPLES'
+        elif sys.argv[1] in ('--export', '-e'):
+            # Export mode handled separately in main()
+            return 'EXPORT'
         else:
             # Treat all args as the ticket content
             return ' '.join(sys.argv[1:])
@@ -240,6 +260,8 @@ async def main():
     print("  python -m src.main                    # Use random sample ticket")
     print("  python -m src.main --all              # Process all 5 sample tickets")
     print("  python -m src.main --interactive      # Enter ticket interactively")
+    print("  python -m src.main --export           # Export tickets to CSV")
+    print("  python -m src.main --export out.csv   # Export to custom filename")
     print("  python -m src.main \"Your ticket...\"   # Provide ticket as argument")
     print("=" * 60)
 
@@ -262,6 +284,19 @@ async def main():
         print("\n[3/5] Initializing database schema...")
         await init_database(pool)
         print("  ✓ Schema initialized")
+
+        # Handle export mode (no AI agent needed)
+        should_export, export_filename = get_export_args()
+        if should_export:
+            from rich.console import Console
+            console = Console(force_terminal=True)
+            console.print(f"\n[bold cyan]Exporting tickets to:[/bold cyan] {export_filename}")
+            count = await export_tickets_to_csv(pool, limit=50, output_path=export_filename)
+            if count > 0:
+                console.print(f"[green]  ✓ Exported {count} ticket(s) to {export_filename}[/green]")
+            else:
+                console.print("[yellow]  No tickets found to export.[/yellow]")
+            return
 
         # 4. Create ticket classification agent
         print("\n[4/5] Creating AI agent...")
