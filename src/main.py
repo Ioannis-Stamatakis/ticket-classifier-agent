@@ -5,7 +5,7 @@ import sys
 from src.config.settings import Settings
 from src.database.connection import create_pool, init_database, close_pool
 from src.agent.ticket_agent import create_ticket_agent
-from src.display.table_display import display_recent_tickets, display_filtered_tickets
+from src.display.table_display import display_recent_tickets, display_filtered_tickets, display_stats
 from src.export.csv_export import export_tickets_to_csv
 from src.utils.enums import Category, Priority
 
@@ -216,6 +216,8 @@ def get_ticket_input() -> str:
         elif sys.argv[1] in ('--filter', '-f'):
             # Filter mode handled separately in main()
             return 'FILTER'
+        elif sys.argv[1] in ('--stats', '-s'):
+            return 'STATS'
         else:
             # Treat all args as the ticket content
             return ' '.join(sys.argv[1:])
@@ -310,6 +312,7 @@ async def main():
     print("  python -m src.main --export out.csv   # Export to custom filename")
     print("  python -m src.main --filter category=billing  # Filter by category")
     print("  python -m src.main --filter priority=high     # Filter by priority")
+    print("  python -m src.main --stats                   # Show analytics dashboard")
     print("  python -m src.main \"Your ticket...\"   # Provide ticket as argument")
     print("=" * 60)
 
@@ -354,6 +357,11 @@ async def main():
                 category=filter_category,
                 priority=filter_priority,
             )
+            return
+
+        # Handle stats mode (no AI agent needed)
+        if ticket_input == 'STATS':
+            await display_stats(pool)
             return
 
         # 4. Create ticket classification agent
