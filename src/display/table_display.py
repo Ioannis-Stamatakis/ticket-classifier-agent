@@ -294,6 +294,113 @@ async def display_filtered_tickets(
         raise
 
 
+async def display_stats(pool: asyncpg.Pool) -> None:
+    """
+    Display an analytics dashboard of all tickets in the database.
+
+    Args:
+        pool: Database connection pool
+    """
+    console = Console(force_terminal=True)
+
+    try:
+        async with pool.acquire() as conn:
+            total = await conn.fetchval("SELECT COUNT(*) FROM tickets")
+
+            if not total:
+                console.print(Panel(
+                    "[yellow]No tickets found. Process your first ticket![/yellow]",
+                    title="Ticket Stats",
+                    border_style="yellow"
+                ))
+                return
+
+            by_category = await conn.fetch("""
+                SELECT category::text, COUNT(*) AS count, AVG(sentiment_score) AS avg_sentiment
+                FROM tickets
+                GROUP BY category
+                ORDER BY count DESC
+            """)
+
+            by_priority = await conn.fetch("""
+                SELECT priority::text, COUNT(*) AS count
+                FROM tickets
+                GROUP BY priority
+                ORDER BY count DESC
+            """)
+
+            overall_sentiment = await conn.fetchval("SELECT AVG(sentiment_score) FROM tickets")
+
+            last_7 = await conn.fetchval(
+                "SELECT COUNT(*) FROM tickets WHERE created_at >= NOW() - INTERVAL '7 days'"
+            )
+            last_30 = await conn.fetchval(
+                "SELECT COUNT(*) FROM tickets WHERE created_at >= NOW() - INTERVAL '30 days'"
+            )
+
+        # --- Overview panel ---
+        sentiment_color = get_sentiment_color(overall_sentiment)
+        overview_lines = (
+            f"[bold]Total Tickets:[/bold]  {total}\n"
+            f"[bold]Avg Sentiment:[/bold]  [{sentiment_color}]{format_sentiment(overall_sentiment)}[/{sentiment_color}]\n"
+            f"[bold]Last 7 days:[/bold]   {last_7}\n"
+            f"[bold]Last 30 days:[/bold]  {last_30}"
+        )
+        console.print()
+        console.print(Panel(overview_lines, title="[bold cyan]Ticket Stats Overview[/bold cyan]", border_style="cyan"))
+
+        # --- By category table ---
+        cat_table = Table(
+            title="[bold cyan]Breakdown by Category[/bold cyan]",
+            title_justify="left",
+            border_style="bright_black",
+            header_style="bold cyan",
+            show_lines=True,
+            padding=(0, 1)
+        )
+        cat_table.add_column("Category", justify="left")
+        cat_table.add_column("Tickets", justify="right")
+        cat_table.add_column("Avg Sentiment", justify="center")
+
+        for row in by_category:
+            cat = row["category"]
+            color = get_category_color(cat)
+            avg = row["avg_sentiment"]
+            cat_table.add_row(
+                Text(cat.replace("_", " ").title(), style=color),
+                str(row["count"]),
+                Text(format_sentiment(avg), style=get_sentiment_color(avg)),
+            )
+        console.print(cat_table)
+
+        # --- By priority table ---
+        pri_table = Table(
+            title="[bold cyan]Breakdown by Priority[/bold cyan]",
+            title_justify="left",
+            border_style="bright_black",
+            header_style="bold cyan",
+            show_lines=True,
+            padding=(0, 1)
+        )
+        pri_table.add_column("Priority", justify="left")
+        pri_table.add_column("Tickets", justify="right")
+
+        for row in by_priority:
+            pri = row["priority"]
+            color = get_priority_color(pri)
+            style = f"{color} bold" if pri == "critical" else color
+            pri_table.add_row(
+                Text(pri.upper(), style=style),
+                str(row["count"]),
+            )
+        console.print(pri_table)
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]Error displaying stats: {e}[/red]")
+        raise
+
+
 async def display_recent_tickets(
     pool: asyncpg.Pool,
     limit: int = 5,
